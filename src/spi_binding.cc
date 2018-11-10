@@ -193,7 +193,7 @@ void Spi::full_duplex_transfer(
   struct spi_ioc_transfer data = {
 	  (unsigned long)write,
 	  (unsigned long)read,
-	  length,
+	  (uint32_t)length,
 	  speed,
 	  delay, // Still unsure ... just expose to options.
 	  bits
