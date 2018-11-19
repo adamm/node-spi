@@ -69,13 +69,19 @@ Spi.prototype.close = function() {
 }
 
 Spi.prototype.write = function(buf, callback) {
-    this._spi.transfer(buf, new Buffer(buf.length));
+    if (this._spi['halfDuplex']()) {
+        this._spi.transfer(buf, null);
+    else
+        this._spi.transfer(buf, new Buffer(buf.length));
 
     isFunction(callback) && callback(this, buf); // TODO: Update once open is async;
 }
 
 Spi.prototype.read = function(buf, callback) {
-    this._spi.transfer(new Buffer(buf.length), buf);
+    if (this._spi['halfDuplex']()) {
+        this._spi.transfer(null, buf);
+    else
+        this._spi.transfer(new Buffer(buf.length), buf);
 
     isFunction(callback) && callback(this, buf); // TODO: Update once open is async;
 }

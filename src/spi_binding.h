@@ -39,6 +39,7 @@ class Spi : public ObjectWrap {
 	        m_mode(0),
 	        m_max_speed(1000000),  // default speed in Hz () 1MHz
 	        m_delay(0),            // expose delay to options
+	        m_3wire(false),        // expose 3wire to options
 	        m_bits_per_word(8) { } // default bits per word
 
 
@@ -57,6 +58,8 @@ class Spi : public ObjectWrap {
         SPI_FUNC(GetSetBitOrder);
         SPI_FUNC(GetSetBitsPerWord);
 
+        void half_duplex_read_transfer(Isolate* isolate, const FunctionCallbackInfo<Value> &args, char *read, size_t length, uint32_t speed, uint16_t delay, uint8_t bits);
+        void half_duplex_write_transfer(Isolate* isolate, const FunctionCallbackInfo<Value> &args, char *write, size_t length, uint32_t speed, uint16_t delay, uint8_t bits);
         void full_duplex_transfer(Isolate* isolate, const FunctionCallbackInfo<Value> &args, char *write, char *read, size_t length, uint32_t speed, uint16_t delay, uint8_t bits);
         bool require_arguments(Isolate* isolate, const FunctionCallbackInfo<Value>& args, int count);
         bool get_argument(Isolate *isolate, const FunctionCallbackInfo<Value>& args, int offset, int& value);
@@ -71,6 +74,7 @@ class Spi : public ObjectWrap {
         uint32_t m_mode;
         uint32_t m_max_speed;
         uint16_t m_delay;
+        bool m_3wire;
         uint8_t m_bits_per_word;
 };
 

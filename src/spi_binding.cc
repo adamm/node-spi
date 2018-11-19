@@ -169,6 +169,20 @@ void Spi::Transfer(const FunctionCallbackInfo<Value> &args) {
     read_length = Buffer::Length(read_buffer_obj);
   }
 
+  if (self->m_3wire) {
+      if (write_length > 0) {
+          self->half_duplex_write_transfer(isolate, args, write_buffer,
+                  write_length, self->m_max_speed,
+                  self->m_delay, self->m_bits_per_word);
+      }
+      else if (read_length > 0) {
+          self->half_duplex_read_transfer(isolate, args, read_buffer,
+                  read_length, self->m_max_speed,
+                  self->m_delay, self->m_bits_per_word);
+      }
+      return;
+  }
+
   if (write_length > 0 && read_length > 0 && write_length != read_length) {
     EXCEPTION("Read and write buffers MUST be the same length");
     return;
@@ -177,7 +191,62 @@ void Spi::Transfer(const FunctionCallbackInfo<Value> &args) {
   self->full_duplex_transfer(isolate, args, write_buffer, read_buffer,
                                 MAX(write_length, read_length),
                                 self->m_max_speed, self->m_delay, self->m_bits_per_word);
+}
 
+void Spi::half_duplex_read_transfer(
+  Isolate *isolate,
+  const FunctionCallbackInfo<Value> &args,
+  char *read,
+  size_t length,
+  uint32_t speed,
+  uint16_t delay,
+  uint8_t bits
+) {
+  struct spi_ioc_transfer data = {
+	  (unsigned long)0,
+	  (unsigned long)read,
+	  (uint32_t)length,
+	  speed,
+	  delay, // Still unsure ... just expose to options.
+	  bits
+  };
+
+  int ret = ioctl(this->m_fd, SPI_IOC_MESSAGE(1), &data);
+
+  if (ret == -1) {
+    EXCEPTION("Unable to send SPI message");
+    return;
+  }
+
+  args.GetReturnValue().Set(ret);
+}
+
+void Spi::half_duplex_write_transfer(
+  Isolate *isolate,
+  const FunctionCallbackInfo<Value> &args,
+  char *write,
+  size_t length,
+  uint32_t speed,
+  uint16_t delay,
+  uint8_t bits
+) {
+  struct spi_ioc_transfer data = {
+	  (unsigned long)write,
+	  (unsigned long)0,
+	  (uint32_t)length,
+	  speed,
+	  delay, // Still unsure ... just expose to options.
+	  bits
+  };
+
+  int ret = ioctl(this->m_fd, SPI_IOC_MESSAGE(1), &data);
+
+  if (ret == -1) {
+    EXCEPTION("Unable to send SPI message");
+    return;
+  }
+
+  args.GetReturnValue().Set(ret);
 }
 
 void Spi::full_duplex_transfer(
@@ -292,6 +361,8 @@ SPI_FUNC_IMPL(GetSet3Wire) {
 
   bool in_value;
   if (!self->get_argument(isolate, args, 0, in_value)) { return; }
+
+  self->m_3wire = in_value;
 
   if (in_value) {
     self->m_mode |= SPI_3WIRE;
