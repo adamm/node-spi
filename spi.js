@@ -69,7 +69,7 @@ Spi.prototype.close = function() {
 }
 
 Spi.prototype.write = function(buf, callback) {
-    if (this._spi['halfDuplex']()) {
+    if (this._spi['halfDuplex']())
         this._spi.transfer(buf, null);
     else
         this._spi.transfer(buf, new Buffer(buf.length));
@@ -78,7 +78,7 @@ Spi.prototype.write = function(buf, callback) {
 }
 
 Spi.prototype.read = function(buf, callback) {
-    if (this._spi['halfDuplex']()) {
+    if (this._spi['halfDuplex']())
         this._spi.transfer(null, buf);
     else
         this._spi.transfer(new Buffer(buf.length), buf);
